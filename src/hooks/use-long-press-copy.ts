@@ -6,16 +6,18 @@ import { copyTextFromUserGesture } from "@/lib/copy-text";
 
 type LongPressState = "idle" | "copying" | "copied" | "error";
 
-const MOVE_CANCEL_PX = 12;
-
 export function useLongPressCopy({
   text,
   pressMs = 450,
   resetMs = 900,
+  moveCancelPx = 18,
+  onCopied,
 }: {
   text: string;
   pressMs?: number;
   resetMs?: number;
+  moveCancelPx?: number;
+  onCopied?: () => void;
 }) {
   const touchStartAtRef = useRef<number | null>(null);
   const startPosRef = useRef<{ x: number; y: number } | null>(null);
@@ -55,10 +57,10 @@ export function useLongPressCopy({
 
     const dx = Math.abs(touch.clientX - startPosRef.current.x);
     const dy = Math.abs(touch.clientY - startPosRef.current.y);
-    if (dx > MOVE_CANCEL_PX || dy > MOVE_CANCEL_PX) {
+    if (dx > moveCancelPx || dy > moveCancelPx) {
       cancelledRef.current = true;
     }
-  }, []);
+  }, [moveCancelPx]);
 
   const onTouchEnd = useCallback(
     (e: React.TouchEvent) => {
@@ -75,9 +77,10 @@ export function useLongPressCopy({
       e.stopPropagation();
 
       setState("copying");
+      onCopied?.();
       void copyTextFromUserGesture(text).then(finishCopy);
     },
-    [finishCopy, pressMs, text],
+    [finishCopy, onCopied, pressMs, text],
   );
 
   const onTouchCancel = useCallback(() => {

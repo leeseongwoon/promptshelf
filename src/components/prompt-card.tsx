@@ -1,7 +1,7 @@
 "use client";
 
 import styled from "styled-components";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 import type { Prompt } from "@/types/prompt";
 import { Card, GhostButton, Pill } from "@/components/ui";
@@ -46,14 +46,10 @@ const Meta = styled.div`
   align-items: center;
 `;
 
-const CopyZone = styled.div`
+const Body = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
-  border-radius: 12px;
-  padding: 6px;
-  margin: -6px;
-  -webkit-touch-callout: none;
 `;
 
 const CopyToast = styled.div<{ $state: "idle" | "copying" | "copied" | "error" }>`
@@ -72,6 +68,12 @@ const Accordion = styled.div<{ $open: boolean }>`
   max-height: ${({ $open }) => ($open ? "720px" : "0px")};
   opacity: ${({ $open }) => ($open ? 1 : 0)};
   transition: max-height 240ms ease, opacity 180ms ease;
+  pointer-events: ${({ $open }) => ($open ? "auto" : "none")};
+`;
+
+const PromptCopySurface = styled.div`
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
 `;
 
 const PromptPreview = styled.pre`
@@ -82,9 +84,17 @@ const PromptPreview = styled.pre`
   border: 1px solid rgba(255, 255, 255, 0.12);
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: ${({ theme }) => theme?.font?.mono ?? "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"};
+  font-family: ${({ theme }) =>
+    theme?.font?.mono ?? "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"};
   line-height: 1.55;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 `;
+
+function stopTouchPropagation(e: React.SyntheticEvent) {
+  e.stopPropagation();
+}
 
 export function PromptCard({
   prompt,
@@ -97,13 +107,30 @@ export function PromptCard({
   isOpen: boolean;
   onToggle: () => void;
 }) {
-  const { state, bind } = useLongPressCopy({ text: prompt.prompt });
+  const suppressToggleRef = useRef(false);
+
+  const { state, bind } = useLongPressCopy({
+    text: prompt.prompt,
+    moveCancelPx: 24,
+    onCopied: () => {
+      suppressToggleRef.current = true;
+    },
+  });
+
   const toast = useMemo(() => {
     if (state === "copied") return "복사됨";
     if (state === "error") return "복사 실패";
     if (state === "copying") return "복사 중…";
-    return "모바일: 카드 꾹 눌러 복사";
-  }, [state]);
+    return isOpen ? "모바일: 프롬프트 영역 꾹 눌러 복사" : "모바일: 카드 꾹 눌러 복사";
+  }, [isOpen, state]);
+
+  function handleCardClick() {
+    if (suppressToggleRef.current) {
+      suppressToggleRef.current = false;
+      return;
+    }
+    onToggle();
+  }
 
   return (
     <Wrap
@@ -112,17 +139,14 @@ export function PromptCard({
       aria-expanded={isOpen}
       aria-controls={`prompt-${prompt.id}`}
       aria-label={`${prompt.title} 카드`}
-      onClick={onToggle}
+      onClick={handleCardClick}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") onToggle();
+        if (e.key === "Enter" || e.key === " ") handleCardClick();
       }}
-      {...bind}
     >
       <TitleRow>
         <div>
-          <Title>
-            {prompt.title}
-          </Title>
+          <Title>{prompt.title}</Title>
         </div>
         <GhostButton
           type="button"
@@ -130,13 +154,14 @@ export function PromptCard({
             e.stopPropagation();
             onUpvote?.();
           }}
+          onTouchStart={stopTouchPropagation}
           aria-label="업보트"
         >
           ▲ {prompt.upvotes}
         </GhostButton>
       </TitleRow>
 
-      <CopyZone aria-hidden>
+      <Body {...(!isOpen ? bind : {})}>
         <Desc>{prompt.description}</Desc>
 
         <Meta>
@@ -148,24 +173,31 @@ export function PromptCard({
           <Pill>by {prompt.authorName}</Pill>
         </Meta>
 
-        <Accordion id={`prompt-${prompt.id}`} $open={isOpen}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 8 }}>
+        <CopyToast $state={state} aria-live="polite">
+          {toast}
+        </CopyToast>
+      </Body>
+
+      <Accordion id={`prompt-${prompt.id}`} $open={isOpen}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 8 }}>
+          <PromptCopySurface {...(isOpen ? bind : {})} aria-label="프롬프트 본문(꾹 눌러 복사)">
             <PromptPreview>
               {prompt.prompt?.trim()
                 ? prompt.prompt
                 : "프롬프트 본문이 없습니다. 잠시 후 다시 시도해주세요."}
             </PromptPreview>
-            <div onClick={(e) => e.stopPropagation()}>
-              <CopyButton text={prompt.prompt} />
-            </div>
-          </div>
-        </Accordion>
+          </PromptCopySurface>
 
-        <CopyToast $state={state} aria-live="polite">
-          {toast}
-        </CopyToast>
-      </CopyZone>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={stopTouchPropagation}
+            onTouchEnd={stopTouchPropagation}
+            onTouchCancel={stopTouchPropagation}
+          >
+            <CopyButton text={prompt.prompt} />
+          </div>
+        </div>
+      </Accordion>
     </Wrap>
   );
 }
-

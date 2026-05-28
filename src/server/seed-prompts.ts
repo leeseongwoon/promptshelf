@@ -33,7 +33,7 @@ export function createSeedPrompts(): Prompt[] {
       authorName: "PromptShelf",
       createdAt: now,
       updatedAt: now,
-      upvotes: 42,
+      upvotes: 0,
     },
     {
       id: randomUUID(),
@@ -64,7 +64,7 @@ export function createSeedPrompts(): Prompt[] {
       authorName: "PromptShelf",
       createdAt: now,
       updatedAt: now,
-      upvotes: 28,
+      upvotes: 0,
     },
     {
       id: randomUUID(),
@@ -124,7 +124,7 @@ export function createSeedPrompts(): Prompt[] {
       authorName: "PromptShelf",
       createdAt: now,
       updatedAt: now,
-      upvotes: 19,
+      upvotes: 0,
     },
     {
       id: randomUUID(),
@@ -155,7 +155,7 @@ export function createSeedPrompts(): Prompt[] {
       authorName: "PromptShelf",
       createdAt: now,
       updatedAt: now,
-      upvotes: 31,
+      upvotes: 0,
     },
     {
       id: randomUUID(),
@@ -186,7 +186,7 @@ export function createSeedPrompts(): Prompt[] {
       authorName: "PromptShelf",
       createdAt: now,
       updatedAt: now,
-      upvotes: 22,
+      upvotes: 0,
     },
     {
       id: randomUUID(),
@@ -212,7 +212,7 @@ export function createSeedPrompts(): Prompt[] {
       authorName: "PromptShelf",
       createdAt: now,
       updatedAt: now,
-      upvotes: 18,
+      upvotes: 0,
     },
     {
       id: randomUUID(),
@@ -238,7 +238,7 @@ export function createSeedPrompts(): Prompt[] {
       authorName: "PromptShelf",
       createdAt: now,
       updatedAt: now,
-      upvotes: 26,
+      upvotes: 0,
     },
     {
       id: randomUUID(),
@@ -267,7 +267,7 @@ export function createSeedPrompts(): Prompt[] {
       authorName: "PromptShelf",
       createdAt: now,
       updatedAt: now,
-      upvotes: 20,
+      upvotes: 0,
     },
   ];
 }
