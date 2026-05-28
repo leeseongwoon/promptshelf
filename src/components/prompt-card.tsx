@@ -102,7 +102,7 @@ export function PromptCard({
     if (state === "copied") return "복사됨";
     if (state === "error") return "복사 실패";
     if (state === "copying") return "복사 중…";
-    return "모바일: 카드 본문 꾹 눌러 복사";
+    return "모바일: 카드 꾹 눌러 복사";
   }, [state]);
 
   return (
@@ -111,10 +111,12 @@ export function PromptCard({
       tabIndex={0}
       aria-expanded={isOpen}
       aria-controls={`prompt-${prompt.id}`}
+      aria-label={`${prompt.title} 카드`}
       onClick={onToggle}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") onToggle();
       }}
+      {...bind}
     >
       <TitleRow>
         <div>
@@ -134,12 +136,7 @@ export function PromptCard({
         </GhostButton>
       </TitleRow>
 
-      <CopyZone
-        {...bind}
-        aria-label="카드 본문(꾹 눌러 복사)"
-        role="region"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <CopyZone aria-hidden>
         <Desc>{prompt.description}</Desc>
 
         <Meta>
@@ -153,7 +150,11 @@ export function PromptCard({
 
         <Accordion id={`prompt-${prompt.id}`} $open={isOpen}>
           <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 8 }}>
-            <PromptPreview>{prompt.prompt}</PromptPreview>
+            <PromptPreview>
+              {prompt.prompt?.trim()
+                ? prompt.prompt
+                : "프롬프트 본문이 없습니다. 잠시 후 다시 시도해주세요."}
+            </PromptPreview>
             <div onClick={(e) => e.stopPropagation()}>
               <CopyButton text={prompt.prompt} />
             </div>

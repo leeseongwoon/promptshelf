@@ -5,6 +5,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 
 import type { AiModelCategory, CreatePromptInput, Prompt, PromptKindCategory, UpdatePromptInput } from "@/types/prompt";
+import { resolvePromptBody } from "@/server/prompt-backfill";
 import { createSeedPrompts } from "@/server/seed-prompts";
 
 type PromptDbShape = {
@@ -28,7 +29,20 @@ async function readDb(): Promise<PromptDbShape> {
   const raw = await fs.readFile(DB_PATH, "utf8");
   const parsed = JSON.parse(raw) as PromptDbShape;
   const prompts = Array.isArray(parsed.prompts) ? parsed.prompts : [];
-  return { prompts: prompts.map(normalizePrompt).filter(Boolean) as Prompt[] };
+  const normalized = prompts.map(normalizePrompt).filter(Boolean) as Prompt[];
+
+  const needsPersist = prompts.some((p, i) => {
+    const next = normalized[i];
+    if (!p || !next) return false;
+    const prevBody = typeof p.prompt === "string" ? p.prompt.trim() : "";
+    return !prevBody && next.prompt.trim().length > 0;
+  });
+
+  if (needsPersist) {
+    await writeDb({ prompts: normalized });
+  }
+
+  return { prompts: normalized };
 }
 
 function isKind(x: unknown): x is PromptKindCategory {
@@ -68,7 +82,8 @@ function normalizePrompt(p: any): Prompt | null {
   if (!p || typeof p !== "object") return null;
   const kind = isKind(p.kind) ? p.kind : mapLegacyCategoryToKind(p.category);
   const model = isModel(p.model) ? p.model : "GPT";
-  return { ...p, kind, model } as Prompt;
+  const prompt = resolvePromptBody(p);
+  return { ...p, kind, model, prompt } as Prompt;
 }
 
 async function writeDb(next: PromptDbShape): Promise<void> {

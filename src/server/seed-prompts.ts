@@ -188,5 +188,86 @@ export function createSeedPrompts(): Prompt[] {
       updatedAt: now,
       upvotes: 22,
     },
+    {
+      id: randomUUID(),
+      title: "썸네일·일러스트 프롬프트 (Claude)",
+      description: "이미지 생성 AI에 바로 넣을 수 있는 영문 프롬프트(포지/네거티브) 작성",
+      prompt: `너는 상업용 일러스트 디렉터야. 아래 정보로 이미지 생성 AI에 넣을 프롬프트를 영어로 작성해줘.
+
+입력:
+- 주제/오브젝트:
+- 스타일(예: flat, 3D, watercolor):
+- 분위기/색감:
+- 구도(클로즈업/와이드 등):
+- 금지 요소:
+
+출력:
+1) Positive prompt (1문단, 쉼표 구분 키워드 포함)
+2) Negative prompt
+3) 권장 비율 (1:1 / 16:9 등)
+4) 한국어로 의도 설명 2문장`,
+      tags: ["image", "illustration", "claude"],
+      kind: "Image",
+      model: "Claude",
+      authorName: "PromptShelf",
+      createdAt: now,
+      updatedAt: now,
+      upvotes: 18,
+    },
+    {
+      id: randomUUID(),
+      title: "유튜브 숏폼 대본 (Gemini)",
+      description: "60초 Shorts용 훅·본문·CTA까지 한 번에 쓰는 대본 프롬프트",
+      prompt: `너는 60초 숏폼 전문 작가야. 아래 주제로 유튜브 Shorts 대본을 작성해줘.
+
+입력:
+- 주제:
+- 타깃 시청자:
+- 핵심 메시지 1개:
+- 톤(정보형/유머/감성):
+
+출력 형식:
+## 훅 (0~3초, 1문장)
+## 본문 (3~50초, 4~6컷, 컷마다 나레이션)
+## CTA (마지막 5초)
+## 자막용 한 줄 요약 3개
+## 추천 B-roll 키워드`,
+      tags: ["video", "shorts", "script"],
+      kind: "Video",
+      model: "Gemini",
+      authorName: "PromptShelf",
+      createdAt: now,
+      updatedAt: now,
+      upvotes: 26,
+    },
+    {
+      id: randomUUID(),
+      title: "SQL 분석 질문 → 쿼리 (GPT)",
+      description: "스키마와 질문만 주면 읽기 쉬운 SQL을 만들어주는 데이터 분석 프롬프트",
+      prompt: `너는 시니어 데이터 애널리스트야. 아래 질문을 해결하는 SQL을 작성해줘.
+
+입력:
+- DB 종류(PostgreSQL/MySQL/BigQuery 등):
+- 테이블 스키마(컬럼명/타입):
+- 분석 질문:
+- 기간/필터 조건:
+
+규칙:
+- 읽기 쉬운 SQL (CTE 활용 가능)
+- 성능을 고려한 WHERE/JOIN
+- 결과 컬럼 alias는 한국어 주석으로 설명
+
+출력:
+## 가정
+## SQL
+## 결과 해석 가이드 (2~3문장)`,
+      tags: ["sql", "data", "analytics"],
+      kind: "Data",
+      model: "GPT",
+      authorName: "PromptShelf",
+      createdAt: now,
+      updatedAt: now,
+      upvotes: 20,
+    },
   ];
 }

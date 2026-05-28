@@ -2,61 +2,88 @@
 
 import { useCallback, useRef, useState } from "react";
 
-import { copyText } from "@/lib/copy-text";
+import { copyTextFromUserGesture } from "@/lib/copy-text";
 
 type LongPressState = "idle" | "copying" | "copied" | "error";
 
+const MOVE_CANCEL_PX = 12;
+
 export function useLongPressCopy({
   text,
-  pressMs = 420,
+  pressMs = 450,
   resetMs = 900,
 }: {
   text: string;
   pressMs?: number;
   resetMs?: number;
 }) {
-  const timerRef = useRef<number | null>(null);
+  const touchStartAtRef = useRef<number | null>(null);
+  const startPosRef = useRef<{ x: number; y: number } | null>(null);
+  const cancelledRef = useRef(false);
   const resetRef = useRef<number | null>(null);
   const [state, setState] = useState<LongPressState>("idle");
 
-  const clearTimers = useCallback(() => {
-    if (timerRef.current) window.clearTimeout(timerRef.current);
+  const clearResetTimer = useCallback(() => {
     if (resetRef.current) window.clearTimeout(resetRef.current);
-    timerRef.current = null;
     resetRef.current = null;
   }, []);
 
-  const doCopy = useCallback(async () => {
-    setState("copying");
-    const ok = await copyText(text);
-    setState(ok ? "copied" : "error");
-    if (navigator.vibrate && ok) navigator.vibrate(8);
-    resetRef.current = window.setTimeout(() => setState("idle"), resetMs);
-  }, [resetMs, text]);
-
-  const onTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      // Prevent accidental text selection / scroll-jank during long press
-      // but don't block normal scrolling for short taps.
-      clearTimers();
-      timerRef.current = window.setTimeout(() => {
-        void doCopy();
-        // Stop the synthetic click after a successful long-press copy.
-        e.preventDefault();
-      }, pressMs);
+  const finishCopy = useCallback(
+    (ok: boolean) => {
+      setState(ok ? "copied" : "error");
+      if (ok && navigator.vibrate) navigator.vibrate(8);
+      clearResetTimer();
+      resetRef.current = window.setTimeout(() => setState("idle"), resetMs);
     },
-    [clearTimers, doCopy, pressMs],
+    [clearResetTimer, resetMs],
   );
 
-  const onTouchEnd = useCallback(() => {
-    if (timerRef.current) window.clearTimeout(timerRef.current);
-    timerRef.current = null;
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    touchStartAtRef.current = Date.now();
+    cancelledRef.current = false;
+    startPosRef.current = { x: touch.clientX, y: touch.clientY };
   }, []);
 
-  const onTouchMove = useCallback(() => {
-    // Cancel if the user starts scrolling.
-    if (timerRef.current) window.clearTimeout(timerRef.current);
-    timerRef.current = null;
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    if (touchStartAtRef.current == null || !startPosRef.current) return;
+
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    const dx = Math.abs(touch.clientX - startPosRef.current.x);
+    const dy = Math.abs(touch.clientY - startPosRef.current.y);
+    if (dx > MOVE_CANCEL_PX || dy > MOVE_CANCEL_PX) {
+      cancelledRef.current = true;
+    }
+  }, []);
+
+  const onTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const startedAt = touchStartAtRef.current;
+      touchStartAtRef.current = null;
+      startPosRef.current = null;
+
+      if (startedAt == null || cancelledRef.current) return;
+
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < pressMs) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      setState("copying");
+      void copyTextFromUserGesture(text).then(finishCopy);
+    },
+    [finishCopy, pressMs, text],
+  );
+
+  const onTouchCancel = useCallback(() => {
+    touchStartAtRef.current = null;
+    startPosRef.current = null;
+    cancelledRef.current = true;
   }, []);
 
   return {
@@ -64,9 +91,8 @@ export function useLongPressCopy({
     bind: {
       onTouchStart,
       onTouchEnd,
-      onTouchCancel: onTouchEnd,
+      onTouchCancel,
       onTouchMove,
     } as const,
   };
 }
-

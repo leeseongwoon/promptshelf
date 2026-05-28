@@ -9,7 +9,7 @@
         "refactor",
         "security"
       ],
-      "upvotes": 42,
+      "upvotes": 71,
       "prompt": "너는 엄격하지만 친절한 시니어 코드 리뷰어야. 아래 코드를 리뷰해줘.\n\n규칙:\n- 가장 중요한 이슈 **5개만**\n- 각 이슈: 심각도(High/Med/Low) / 문제 설명 / 수정 방법(가능하면 코드 스니펫)\n- 스타일 취향, 네이밍 취향은 제외\n- 버그, 성능, 유지보수성, 보안 중심\n\n출력 형식:\n## 한 줄 요약\n## 이슈 목록\n## (선택) 리팩터링 제안 1개\n\n코드:\n```\n(여기에 코드 붙여넣기)\n```",
       "authorName": "PromptShelf",
       "createdAt": "2026-05-28T03:56:24.406Z",
@@ -94,13 +94,64 @@
         "interview",
         "star"
       ],
-      "upvotes": 22,
+      "upvotes": 28,
       "prompt": "너는 대기업/스타트업 채용을 모두 겪어본 커리어 코치야. 아래 경험을 STAR 면접 답변으로 다듬어줘.\n\n입력:\n- 지원 포지션:\n- 회사/팀 맥락(선택):\n- 내 경험(자유 서술):\n- 강조하고 싶은 역량(예: 리더십, 문제해결, 협업):\n\n출력:\n## STAR 초안\n- Situation:\n- Task:\n- Action:\n- Result: (가능하면 수치/임팩트)\n\n## 1분 답변 (말하기용, 120~150단어)\n## 3분 답변 (말하기용)\n## 예상 꼬리질문 3개 + 답변 힌트\n## 피해야 할 표현/약점 보완 팁",
       "authorName": "PromptShelf",
       "createdAt": "2026-05-28T03:56:24.406Z",
       "updatedAt": "2026-05-28T03:56:24.406Z",
       "kind": "Writing",
       "model": "GPT"
+    },
+    {
+      "id": "4833de3f-b5a5-4a70-a253-3210b993bc9a",
+      "title": "썸네일·일러스트 프롬프트 (Claude)",
+      "description": "이미지 생성 AI에 바로 넣을 수 있는 영문 프롬프트(포지/네거티브) 작성",
+      "kind": "Image",
+      "model": "Claude",
+      "upvotes": 18,
+      "tags": [
+        "image",
+        "illustration",
+        "claude"
+      ],
+      "prompt": "너는 상업용 일러스트 디렉터야. 아래 정보로 이미지 생성 AI에 넣을 프롬프트를 영어로 작성해줘.\n\n입력:\n- 주제/오브젝트:\n- 스타일(예: flat, 3D, watercolor):\n- 분위기/색감:\n- 구도(클로즈업/와이드 등):\n- 금지 요소:\n\n출력:\n1) Positive prompt (1문단, 쉼표 구분 키워드 포함)\n2) Negative prompt\n3) 권장 비율 (1:1 / 16:9 등)\n4) 한국어로 의도 설명 2문장",
+      "authorName": "PromptShelf",
+      "createdAt": "2026-05-28T14:52:01.292Z",
+      "updatedAt": "2026-05-28T14:52:01.292Z"
+    },
+    {
+      "id": "bc6ced50-0e56-4ddc-8e46-69d272bbec97",
+      "title": "유튜브 숏폼 대본 (Gemini)",
+      "description": "60초 Shorts용 훅·본문·CTA까지 한 번에 쓰는 대본 프롬프트",
+      "kind": "Video",
+      "model": "Gemini",
+      "upvotes": 26,
+      "tags": [
+        "video",
+        "shorts",
+        "script"
+      ],
+      "prompt": "너는 60초 숏폼 전문 작가야. 아래 주제로 유튜브 Shorts 대본을 작성해줘.\n\n입력:\n- 주제:\n- 타깃 시청자:\n- 핵심 메시지 1개:\n- 톤(정보형/유머/감성):\n\n출력 형식:\n## 훅 (0~3초, 1문장)\n## 본문 (3~50초, 4~6컷, 컷마다 나레이션)\n## CTA (마지막 5초)\n## 자막용 한 줄 요약 3개\n## 추천 B-roll 키워드",
+      "authorName": "PromptShelf",
+      "createdAt": "2026-05-28T14:52:01.292Z",
+      "updatedAt": "2026-05-28T14:52:01.292Z"
+    },
+    {
+      "id": "2bde2c2a-6701-4a34-b66a-8ba3cc3d1ff2",
+      "title": "SQL 분석 질문 → 쿼리 (GPT)",
+      "description": "스키마와 질문만 주면 읽기 쉬운 SQL을 만들어주는 데이터 분석 프롬프트",
+      "kind": "Data",
+      "model": "GPT",
+      "upvotes": 20,
+      "tags": [
+        "sql",
+        "data",
+        "analytics"
+      ],
+      "prompt": "너는 시니어 데이터 애널리스트야. 아래 질문을 해결하는 SQL을 작성해줘.\n\n입력:\n- DB 종류(PostgreSQL/MySQL/BigQuery 등):\n- 테이블 스키마(컬럼명/타입):\n- 분석 질문:\n- 기간/필터 조건:\n\n규칙:\n- 읽기 쉬운 SQL (CTE 활용 가능)\n- 성능을 고려한 WHERE/JOIN\n- 결과 컬럼 alias는 한국어 주석으로 설명\n\n출력:\n## 가정\n## SQL\n## 결과 해석 가이드 (2~3문장)",
+      "authorName": "PromptShelf",
+      "createdAt": "2026-05-28T14:52:01.292Z",
+      "updatedAt": "2026-05-28T14:52:01.292Z"
     }
   ]
 }
