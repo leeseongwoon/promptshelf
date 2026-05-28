@@ -5,18 +5,21 @@ import { PromptFeedView } from "@/features/prompt-feed/prompt-feed-view";
 export async function PromptFeed({
   q,
   tag,
-  category,
+  kind,
+  model,
   sort,
 }: {
   q?: string;
   tag?: string;
-  category?: string;
+  kind?: string;
+  model?: string;
   sort?: string;
 }) {
   const prompts: Prompt[] = await listPrompts({
     q,
     tag,
-    category,
+    kind,
+    model,
     sort: sort === "new" ? "new" : "trending",
   });
 

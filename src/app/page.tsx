@@ -10,15 +10,16 @@ export default async function Home({
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q : undefined;
   const tag = typeof sp.tag === "string" ? sp.tag : undefined;
-  const category = typeof sp.category === "string" ? sp.category : undefined;
+  const kind = typeof sp.kind === "string" ? sp.kind : undefined;
+  const model = typeof sp.model === "string" ? sp.model : undefined;
   const sort = typeof sp.sort === "string" ? sp.sort : undefined;
 
   return (
     <>
-      <SiteHeader defaultQuery={q} tag={tag} />
+      <SiteHeader defaultQuery={q} tag={tag} defaultKind={kind} defaultModel={model} />
       <main>
         <Container>
-          <PromptFeed q={q} tag={tag} category={category} sort={sort} />
+          <PromptFeed q={q} tag={tag} kind={kind} model={model} sort={sort} />
         </Container>
       </main>
     </>

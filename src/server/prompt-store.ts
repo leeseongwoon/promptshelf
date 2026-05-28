@@ -4,7 +4,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
-import type { CreatePromptInput, Prompt, UpdatePromptInput } from "@/types/prompt";
+import type { AiModelCategory, CreatePromptInput, Prompt, PromptKindCategory, UpdatePromptInput } from "@/types/prompt";
 import { createSeedPrompts } from "@/server/seed-prompts";
 
 type PromptDbShape = {
@@ -27,7 +27,48 @@ async function readDb(): Promise<PromptDbShape> {
   await ensureDbFile();
   const raw = await fs.readFile(DB_PATH, "utf8");
   const parsed = JSON.parse(raw) as PromptDbShape;
-  return { prompts: Array.isArray(parsed.prompts) ? parsed.prompts : [] };
+  const prompts = Array.isArray(parsed.prompts) ? parsed.prompts : [];
+  return { prompts: prompts.map(normalizePrompt).filter(Boolean) as Prompt[] };
+}
+
+function isKind(x: unknown): x is PromptKindCategory {
+  return (
+    x === "Code" ||
+    x === "Image" ||
+    x === "Writing" ||
+    x === "Video" ||
+    x === "Data" ||
+    x === "Productivity" ||
+    x === "Other"
+  );
+}
+
+function isModel(x: unknown): x is AiModelCategory {
+  return x === "GPT" || x === "Claude" || x === "Gemini" || x === "Other";
+}
+
+function mapLegacyCategoryToKind(category: unknown): PromptKindCategory {
+  switch (category) {
+    case "Coding":
+      return "Code";
+    case "Design":
+      return "Image";
+    case "Writing":
+    case "Marketing":
+    case "Career":
+      return "Writing";
+    case "Product":
+      return "Productivity";
+    default:
+      return "Other";
+  }
+}
+
+function normalizePrompt(p: any): Prompt | null {
+  if (!p || typeof p !== "object") return null;
+  const kind = isKind(p.kind) ? p.kind : mapLegacyCategoryToKind(p.category);
+  const model = isModel(p.model) ? p.model : "GPT";
+  return { ...p, kind, model } as Prompt;
 }
 
 async function writeDb(next: PromptDbShape): Promise<void> {
@@ -38,7 +79,8 @@ async function writeDb(next: PromptDbShape): Promise<void> {
 export type ListPromptsQuery = {
   q?: string;
   tag?: string;
-  category?: string;
+  kind?: string;
+  model?: string;
   sort?: "trending" | "new";
 };
 
@@ -46,7 +88,8 @@ export async function listPrompts(query: ListPromptsQuery = {}): Promise<Prompt[
   const { prompts } = await readDb();
   const q = query.q?.trim().toLowerCase();
   const tag = query.tag?.trim().toLowerCase();
-  const category = query.category?.trim();
+  const kind = query.kind?.trim();
+  const model = query.model?.trim();
 
   const filtered = prompts.filter((p) => {
     const matchesQ =
@@ -56,8 +99,9 @@ export async function listPrompts(query: ListPromptsQuery = {}): Promise<Prompt[
       p.prompt.toLowerCase().includes(q) ||
       p.tags.some((t) => t.toLowerCase().includes(q));
     const matchesTag = !tag || p.tags.some((t) => t.toLowerCase() === tag);
-    const matchesCategory = !category || p.category === category;
-    return matchesQ && matchesTag && matchesCategory;
+    const matchesKind = !kind || p.kind === kind;
+    const matchesModel = !model || p.model === model;
+    return matchesQ && matchesTag && matchesKind && matchesModel;
   });
 
   const sort = query.sort ?? "trending";
@@ -80,7 +124,8 @@ export async function createPrompt(input: CreatePromptInput): Promise<Prompt> {
     description: input.description.trim(),
     prompt: input.prompt.trim(),
     tags: input.tags.map((t) => t.trim()).filter(Boolean).slice(0, 12),
-    category: input.category,
+    kind: input.kind,
+    model: input.model,
     authorName: input.authorName.trim() || "Anonymous",
     createdAt: now,
     updatedAt: now,
@@ -107,7 +152,8 @@ export async function updatePrompt(id: string, patch: UpdatePromptInput): Promis
     ...(patch.tags !== undefined
       ? { tags: patch.tags.map((t) => t.trim()).filter(Boolean).slice(0, 12) }
       : null),
-    ...(patch.category !== undefined ? { category: patch.category } : null),
+    ...(patch.kind !== undefined ? { kind: patch.kind } : null),
+    ...(patch.model !== undefined ? { model: patch.model } : null),
     updatedAt: new Date().toISOString(),
   };
 

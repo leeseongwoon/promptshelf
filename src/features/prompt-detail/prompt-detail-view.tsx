@@ -112,7 +112,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               </Toast>
 
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                <Pill>{prompt.category}</Pill>
+                <Pill>{prompt.kind}</Pill>
+                <Pill>{prompt.model}</Pill>
                 <Pill>▲ {prompt.upvotes}</Pill>
                 <Pill>by {prompt.authorName}</Pill>
               </div>

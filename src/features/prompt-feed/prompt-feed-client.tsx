@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import styled from "styled-components";
 
 import type { Prompt } from "@/types/prompt";
@@ -35,12 +35,8 @@ const Right = styled.div`
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: ${({ theme }) => theme?.space?.[5] ?? "20px"};
-
-  @media (max-width: 980px) {
-    grid-template-columns: 1fr;
-  }
 `;
 
 const MobileSearch = styled.form`
@@ -56,8 +52,14 @@ export function PromptFeedClient({ initialPrompts }: { initialPrompts: Prompt[] 
   const [prompts, setPrompts] = useState<Prompt[]>(initialPrompts);
   const [isPending, startTransition] = useTransition();
   const [mobileQ, setMobileQ] = useState("");
+  const [openId, setOpenId] = useState<string | null>(null);
 
   const count = useMemo(() => prompts.length, [prompts]);
+
+  useEffect(() => {
+    setPrompts(initialPrompts);
+    setOpenId(null);
+  }, [initialPrompts]);
 
   function refreshWithQuery(q: string) {
     startTransition(async () => {
@@ -113,7 +115,13 @@ export function PromptFeedClient({ initialPrompts }: { initialPrompts: Prompt[] 
 
       <Grid>
         {prompts.map((p) => (
-          <PromptCard key={p.id} prompt={p} onUpvote={() => upvote(p.id)} />
+          <PromptCard
+            key={p.id}
+            prompt={p}
+            isOpen={openId === p.id}
+            onToggle={() => setOpenId((prev) => (prev === p.id ? null : p.id))}
+            onUpvote={() => upvote(p.id)}
+          />
         ))}
       </Grid>
     </>

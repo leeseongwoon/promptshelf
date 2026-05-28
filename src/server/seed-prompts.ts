@@ -28,7 +28,8 @@ export function createSeedPrompts(): Prompt[] {
 (여기에 코드 붙여넣기)
 \`\`\``,
       tags: ["code-review", "refactor", "security"],
-      category: "Coding",
+      kind: "Code",
+      model: "GPT",
       authorName: "PromptShelf",
       createdAt: now,
       updatedAt: now,
@@ -58,7 +59,8 @@ export function createSeedPrompts(): Prompt[] {
 ## 영향도/우선순위 제안
 ## 임시 우회 방법(있으면)`,
       tags: ["qa", "bug-report", "template"],
-      category: "Product",
+      kind: "Productivity",
+      model: "GPT",
       authorName: "PromptShelf",
       createdAt: now,
       updatedAt: now,
@@ -87,7 +89,8 @@ export function createSeedPrompts(): Prompt[] {
 
 톤: 짧고 명확하게. 리뷰어가 2분 안에 이해할 수 있게.`,
       tags: ["pr", "github", "engineering"],
-      category: "Coding",
+      kind: "Code",
+      model: "GPT",
       authorName: "PromptShelf",
       createdAt: now,
       updatedAt: now,
@@ -116,7 +119,8 @@ export function createSeedPrompts(): Prompt[] {
 ## 미결 사항 (Open questions)
 ## 다음 회의 전 체크리스트`,
       tags: ["meeting", "productivity", "pm"],
-      category: "Product",
+      kind: "Productivity",
+      model: "GPT",
       authorName: "PromptShelf",
       createdAt: now,
       updatedAt: now,
@@ -146,7 +150,8 @@ export function createSeedPrompts(): Prompt[] {
 
 금지: 과장된 유행어, 근거 없는 수치, 모호한 표현.`,
       tags: ["marketing", "landing-page", "copywriting"],
-      category: "Marketing",
+      kind: "Writing",
+      model: "GPT",
       authorName: "PromptShelf",
       createdAt: now,
       updatedAt: now,
@@ -176,7 +181,8 @@ export function createSeedPrompts(): Prompt[] {
 ## 예상 꼬리질문 3개 + 답변 힌트
 ## 피해야 할 표현/약점 보완 팁`,
       tags: ["career", "interview", "star"],
-      category: "Career",
+      kind: "Writing",
+      model: "GPT",
       authorName: "PromptShelf",
       createdAt: now,
       updatedAt: now,
