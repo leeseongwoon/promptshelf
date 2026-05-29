@@ -7,16 +7,24 @@ import type { Prompt } from "@/types/prompt";
 import { Card, GhostButton, Pill } from "@/components/ui";
 import { useLongPressCopy } from "@/hooks/use-long-press-copy";
 import { CopyButton } from "@/components/copy-button";
+import { formatKind, formatModel } from "@/lib/prompt-labels";
 
-const Wrap = styled(Card)`
-  padding: ${({ theme }) => theme?.space?.[6] ?? "24px"};
+const Wrap = styled(Card)<{ $open: boolean }>`
+  padding: ${({ theme }) => theme.space[5]} ${({ theme }) => theme.space[5]}
+    ${({ theme }) => theme.space[6]};
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme?.space?.[4] ?? "16px"};
+  gap: ${({ theme }) => theme.space[3]};
   cursor: pointer;
+  transform: ${({ $open }) => ($open ? "scale(1.01)" : "none")};
+  background: ${({ $open, theme }) =>
+    $open
+      ? `linear-gradient(160deg, ${theme.color.panel} 0%, ${theme.color.brandSoft} 100%)`
+      : theme.color.panel};
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: ${({ theme }) => theme.shadow.cardHover};
+    transform: translateY(-3px) scale(1.005);
   }
 `;
 
@@ -24,19 +32,23 @@ const TitleRow = styled.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: ${({ theme }) => theme?.space?.[4] ?? "16px"};
+  gap: ${({ theme }) => theme.space[3]};
 `;
 
 const Title = styled.h3`
   margin: 0;
-  font-size: 18px;
-  letter-spacing: -0.2px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  line-height: 1.4;
+  color: ${({ theme }) => theme.color.text};
 `;
 
 const Desc = styled.p`
   margin: 0;
-  color: ${({ theme }) => theme?.color?.text2 ?? "rgba(238, 241, 247, 0.72)"};
-  line-height: 1.5;
+  color: ${({ theme }) => theme.color.text2};
+  line-height: 1.65;
+  font-size: 14px;
 `;
 
 const Meta = styled.div`
@@ -49,12 +61,13 @@ const Meta = styled.div`
 const Body = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 `;
 
 const CopyToast = styled.div<{ $state: "idle" | "copying" | "copied" | "error" }>`
-  height: 18px;
+  min-height: 18px;
   font-size: 12px;
+  font-weight: 600;
   color: ${({ theme, $state }) =>
     $state === "copied"
       ? theme.color.success
@@ -67,7 +80,7 @@ const Accordion = styled.div<{ $open: boolean }>`
   overflow: hidden;
   max-height: ${({ $open }) => ($open ? "720px" : "0px")};
   opacity: ${({ $open }) => ($open ? 1 : 0)};
-  transition: max-height 240ms ease, opacity 180ms ease;
+  transition: max-height 280ms cubic-bezier(0.34, 1.2, 0.64, 1), opacity 200ms ease;
   pointer-events: ${({ $open }) => ($open ? "auto" : "none")};
 `;
 
@@ -76,20 +89,37 @@ const PromptCopySurface = styled.div`
   touch-action: manipulation;
 `;
 
-const PromptPreview = styled.pre`
+const PromptPreview = styled.div`
   margin: 0;
-  padding: 12px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 16px 18px;
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: ${({ theme }) => theme.color.noteBg};
+  border: 2px solid rgba(255, 220, 180, 0.5);
+  color: ${({ theme }) => theme.color.text};
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: ${({ theme }) =>
-    theme?.font?.mono ?? "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"};
-  line-height: 1.55;
+  font-family: ${({ theme }) => theme.font.sans};
+  font-size: 14px;
+  line-height: 1.75;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+  position: relative;
+
+  &::before {
+    content: "📝";
+    position: absolute;
+    top: -10px;
+    right: 14px;
+    font-size: 20px;
+  }
+`;
+
+const LikeButton = styled(GhostButton)`
+  flex-shrink: 0;
+  min-width: 72px;
+  padding: 8px 14px;
+  font-size: 13px;
 `;
 
 function stopTouchPropagation(e: React.SyntheticEvent) {
@@ -118,10 +148,10 @@ export function PromptCard({
   });
 
   const toast = useMemo(() => {
-    if (state === "copied") return "복사됨";
-    if (state === "error") return "복사 실패";
-    if (state === "copying") return "복사 중…";
-    return isOpen ? "모바일: 프롬프트 영역 꾹 눌러 복사" : "모바일: 카드 꾹 눌러 복사";
+    if (state === "copied") return "복사됐어요 💕";
+    if (state === "error") return "앗, 다시 한번 눌러볼까요?";
+    if (state === "copying") return "잠깐만…";
+    return isOpen ? "꾹 누르면 복사돼요" : "카드 꾹 눌러도 복사돼요";
   }, [isOpen, state]);
 
   function handleCardClick() {
@@ -134,6 +164,7 @@ export function PromptCard({
 
   return (
     <Wrap
+      $open={isOpen}
       role="button"
       tabIndex={0}
       aria-expanded={isOpen}
@@ -145,32 +176,31 @@ export function PromptCard({
       }}
     >
       <TitleRow>
-        <div>
-          <Title>{prompt.title}</Title>
-        </div>
-        <GhostButton
+        <Title>{prompt.title}</Title>
+        <LikeButton
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             onUpvote?.();
           }}
           onTouchStart={stopTouchPropagation}
-          aria-label="업보트"
+          aria-label="도움 됐어요"
         >
-          ▲ {prompt.upvotes}
-        </GhostButton>
+          ♡ {prompt.upvotes}
+        </LikeButton>
       </TitleRow>
 
       <Body {...(!isOpen ? bind : {})}>
         <Desc>{prompt.description}</Desc>
 
         <Meta>
-          <Pill>{prompt.kind}</Pill>
-          <Pill>{prompt.model}</Pill>
-          {prompt.tags.slice(0, 6).map((t) => (
-            <Pill key={t}>#{t}</Pill>
+          <Pill $tone="pink">{formatKind(prompt.kind)}</Pill>
+          <Pill $tone="lavender">{formatModel(prompt.model)}</Pill>
+          {prompt.tags.slice(0, 4).map((t) => (
+            <Pill key={t} $tone="plain">
+              #{t}
+            </Pill>
           ))}
-          <Pill>by {prompt.authorName}</Pill>
         </Meta>
 
         <CopyToast $state={state} aria-live="polite">
@@ -179,12 +209,12 @@ export function PromptCard({
       </Body>
 
       <Accordion id={`prompt-${prompt.id}`} $open={isOpen}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, paddingTop: 10 }}>
           <PromptCopySurface {...(isOpen ? bind : {})} aria-label="프롬프트 본문(꾹 눌러 복사)">
             <PromptPreview>
               {prompt.prompt?.trim()
                 ? prompt.prompt
-                : "프롬프트 본문이 없습니다. 잠시 후 다시 시도해주세요."}
+                : "아직 내용이 비어 있어요. 잠시 후 다시 봐주세요."}
             </PromptPreview>
           </PromptCopySurface>
 

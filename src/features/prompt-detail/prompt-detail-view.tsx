@@ -39,9 +39,10 @@ const Desc = styled.p`
 const PromptBox = styled.pre`
   margin: ${({ theme }) => theme.space[6]} 0 0 0;
   padding: ${({ theme }) => theme.space[6]};
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme }) => theme.color.promptBg};
+  border: 1px dashed ${({ theme }) => theme.color.border};
   border-radius: ${({ theme }) => theme.radius.lg};
+  color: ${({ theme }) => theme.color.text};
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-word;

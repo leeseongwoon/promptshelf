@@ -1,23 +1,35 @@
 export const theme = {
   color: {
-    bg: "#0B0D12",
-    panel: "rgba(255, 255, 255, 0.06)",
-    panel2: "rgba(255, 255, 255, 0.10)",
-    text: "#EEF1F7",
-    text2: "rgba(238, 241, 247, 0.72)",
-    border: "rgba(255, 255, 255, 0.10)",
-    brand: "#7C5CFF",
-    brand2: "#35D0FF",
-    danger: "#FF5C7A",
-    success: "#42E599",
+    bg: "#FFF7FA",
+    bgAccent: "#F3E8FF",
+    panel: "#FFFFFF",
+    panel2: "#FFE8F2",
+    panel3: "#F0E6FF",
+    text: "#4A3D47",
+    text2: "#9A8494",
+    border: "rgba(255, 180, 205, 0.45)",
+    brand: "#FF8FAB",
+    brand2: "#C9A0FF",
+    brandSoft: "#FFE3EE",
+    danger: "#FF6B8A",
+    success: "#6BC9A2",
+    headerBg: "rgba(255, 247, 250, 0.92)",
+    promptBg: "#FFF0F6",
+    noteBg: "#FFFBF0",
+    onPrimary: "#FFFFFF",
   },
   radius: {
-    sm: "10px",
-    md: "14px",
-    lg: "18px",
+    sm: "16px",
+    md: "22px",
+    lg: "28px",
+    xl: "36px",
+    pill: "999px",
   },
   shadow: {
-    sm: "0 10px 30px rgba(0, 0, 0, 0.35)",
+    sm: "0 10px 28px rgba(255, 143, 171, 0.14)",
+    md: "0 14px 36px rgba(201, 160, 255, 0.16)",
+    cardHover: "0 18px 40px rgba(255, 143, 171, 0.22)",
+    inset: "inset 0 1px 0 rgba(255, 255, 255, 0.9)",
   },
   space: {
     1: "4px",
@@ -32,9 +44,8 @@ export const theme = {
   },
   font: {
     sans:
-      "var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial",
+      'var(--font-gowun), "Apple SD Gothic Neo", "Malgun Gothic", ui-sans-serif, system-ui, sans-serif',
     mono:
-      "var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+      'var(--font-gowun), "Apple SD Gothic Neo", ui-sans-serif, system-ui, sans-serif',
   },
 } as const;
-

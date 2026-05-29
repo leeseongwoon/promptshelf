@@ -1,22 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Gowun_Dodum } from "next/font/google";
 
 import { StyledComponentsProvider } from "@/lib/styled-components-provider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const gowun = Gowun_Dodum({
+  weight: "400",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-gowun",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "PromptShelf",
-  description:
-    "Discover, share, and reuse high-quality AI prompts — fast, minimal, and community-driven.",
+  title: "프롬프트 선반",
+  description: "과제·일기·취미까지, 바로 복사해서 쓰는 프롬프트 모음집",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
 };
 
@@ -26,11 +22,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="ko" className={gowun.variable}>
       <head>
         <style
           dangerouslySetInnerHTML={{
-            __html: `body{margin:0;background:#0B0D12;color:#EEF1F7;font-family:var(--font-geist-sans),system-ui,sans-serif;}`,
+            __html: `body{margin:0;background:#FFF7FA;color:#4A3D47;font-family:var(--font-gowun),"Apple SD Gothic Neo","Malgun Gothic",sans-serif;}`,
           }}
         />
       </head>

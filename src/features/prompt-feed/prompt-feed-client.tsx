@@ -5,46 +5,39 @@ import styled from "styled-components";
 
 import type { Prompt } from "@/types/prompt";
 import { PromptCard } from "@/components/prompt-card";
-import { Card, GhostButton, Input, Pill } from "@/components/ui";
+import { GhostButton, Input } from "@/components/ui";
 
-const Controls = styled(Card)`
-  padding: ${({ theme }) => theme?.space?.[5] ?? "20px"};
+const FeedTop = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: ${({ theme }) => theme?.space?.[4] ?? "16px"};
-  margin-bottom: ${({ theme }) => theme?.space?.[6] ?? "24px"};
-
-  @media (max-width: 720px) {
-    flex-direction: column;
-    align-items: stretch;
-  }
+  gap: ${({ theme }) => theme.space[3]};
+  margin-bottom: ${({ theme }) => theme.space[5]};
+  flex-wrap: wrap;
 `;
 
-const Left = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
-const Right = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme?.space?.[3] ?? "12px"};
-  align-items: center;
+const CountLine = styled.p`
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.color.text2};
 `;
 
 const Grid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: ${({ theme }) => theme?.space?.[5] ?? "20px"};
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.space[5]};
 `;
 
 const MobileSearch = styled.form`
   display: none;
-  gap: ${({ theme }) => theme?.space?.[3] ?? "12px"};
+  gap: ${({ theme }) => theme.space[3]};
+  width: 100%;
+  margin-top: ${({ theme }) => theme.space[3]};
 
   @media (max-width: 720px) {
     display: flex;
+    flex-direction: column;
   }
 `;
 
@@ -80,38 +73,33 @@ export function PromptFeedClient({ initialPrompts }: { initialPrompts: Prompt[] 
 
   return (
     <>
-      <Controls>
-        <Left>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <Pill>총 {count}개</Pill>
-            {isPending ? <Pill>불러오는 중…</Pill> : null}
-          </div>
-          <MobileSearch
-            onSubmit={(e) => {
-              e.preventDefault();
-              refreshWithQuery(mobileQ);
-            }}
-            role="search"
-            aria-label="모바일 검색"
-          >
-            <Input
-              value={mobileQ}
-              onChange={(e) => setMobileQ(e.target.value)}
-              placeholder="검색어…"
-              aria-label="검색어"
-            />
-            <GhostButton type="submit" disabled={isPending}>
-              검색
-            </GhostButton>
-          </MobileSearch>
-        </Left>
+      <FeedTop>
+        <CountLine>
+          지금 {count}개 모여 있어요 {isPending ? "· 불러오는 중…" : ""}
+        </CountLine>
+        <GhostButton type="button" disabled={isPending} onClick={() => refreshWithQuery("")}>
+          처음부터 보기
+        </GhostButton>
+      </FeedTop>
 
-        <Right>
-          <GhostButton type="button" disabled={isPending} onClick={() => refreshWithQuery("")}>
-            전체보기
-          </GhostButton>
-        </Right>
-      </Controls>
+      <MobileSearch
+        onSubmit={(e) => {
+          e.preventDefault();
+          refreshWithQuery(mobileQ);
+        }}
+        role="search"
+        aria-label="모바일 검색"
+      >
+        <Input
+          value={mobileQ}
+          onChange={(e) => setMobileQ(e.target.value)}
+          placeholder="🔍 여기서도 찾아볼 수 있어요"
+          aria-label="검색어"
+        />
+        <GhostButton type="submit" disabled={isPending}>
+          찾아보기
+        </GhostButton>
+      </MobileSearch>
 
       <Grid>
         {prompts.map((p) => (
@@ -127,4 +115,3 @@ export function PromptFeedClient({ initialPrompts }: { initialPrompts: Prompt[] 
     </>
   );
 }
-

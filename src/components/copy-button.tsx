@@ -6,19 +6,26 @@ import styled from "styled-components";
 import { Button } from "@/components/ui";
 import { copyText } from "@/lib/copy-text";
 
+const Row = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+`;
+
 const CopyHint = styled.span`
-  color: ${({ theme }) => theme?.color?.text2 ?? "rgba(238, 241, 247, 0.72)"};
+  color: ${({ theme }) => theme.color.text2};
   font-size: 12px;
-  margin-left: 10px;
+  font-weight: 600;
 `;
 
 export function CopyButton({ text }: { text: string }) {
   const [state, setState] = useState<"idle" | "copied" | "error">("idle");
 
   const label = useMemo(() => {
-    if (state === "copied") return "복사됨";
-    if (state === "error") return "복사 실패";
-    return "복사";
+    if (state === "copied") return "복사됐어요 💕";
+    if (state === "error") return "다시 눌러주세요";
+    return "복사하기";
   }, [state]);
 
   async function onCopy() {
@@ -34,12 +41,11 @@ export function CopyButton({ text }: { text: string }) {
   }
 
   return (
-    <div>
+    <Row>
       <Button type="button" $variant="primary" onClick={onCopy} aria-live="polite">
         {label}
       </Button>
-      <CopyHint>모바일은 길게 눌러도 복사할 수 있어요.</CopyHint>
-    </div>
+      <CopyHint>길게 눌러도 OK</CopyHint>
+    </Row>
   );
 }
-

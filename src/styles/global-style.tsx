@@ -6,7 +6,7 @@ import { createGlobalStyle } from "styled-components";
 
 export const GlobalStyle = createGlobalStyle`
   :root {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   html, body {
@@ -15,11 +15,14 @@ export const GlobalStyle = createGlobalStyle`
 
   body {
     margin: 0;
-    background: ${({ theme }) => theme?.color?.bg ?? "#0B0D12"};
-    color: ${({ theme }) => theme?.color?.text ?? "#EEF1F7"};
-    font-family: ${({ theme }) =>
-      theme?.font?.sans ??
-      "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"};
+    background: ${({ theme }) => theme.color.bg};
+    background-image:
+      radial-gradient(ellipse 90% 60% at 10% 0%, ${({ theme }) => theme.color.bgAccent}66 0%, transparent 55%),
+      radial-gradient(ellipse 80% 50% at 95% 8%, ${({ theme }) => theme.color.brandSoft}99 0%, transparent 48%),
+      radial-gradient(circle at 50% 100%, ${({ theme }) => theme.color.panel3}44 0%, transparent 40%);
+    color: ${({ theme }) => theme.color.text};
+    font-family: ${({ theme }) => theme.font.sans};
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -37,8 +40,13 @@ export const GlobalStyle = createGlobalStyle`
     font: inherit;
   }
 
+  ::placeholder {
+    color: ${({ theme }) => theme?.color?.text2 ?? "#8A7382"};
+    opacity: 0.85;
+  }
+
   :focus-visible {
-    outline: 2px solid ${({ theme }) => theme?.color?.brand2 ?? "#35D0FF"};
+    outline: 2px solid ${({ theme }) => theme?.color?.brand ?? "#FF8FAB"};
     outline-offset: 2px;
   }
 
@@ -51,4 +59,3 @@ export const GlobalStyle = createGlobalStyle`
     }
   }
 `;
-
