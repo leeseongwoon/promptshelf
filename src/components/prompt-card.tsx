@@ -104,15 +104,6 @@ const PromptPreview = styled.div`
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-  position: relative;
-
-  &::before {
-    content: "📝";
-    position: absolute;
-    top: -10px;
-    right: 14px;
-    font-size: 20px;
-  }
 `;
 
 const LikeButton = styled(GhostButton)`
@@ -147,11 +138,12 @@ export function PromptCard({
     },
   });
 
-  const toast = useMemo(() => {
+  const closedToast = useMemo(() => {
+    if (isOpen) return "";
     if (state === "copied") return "복사됐어요 💕";
-    if (state === "error") return "앗, 다시 한번 눌러볼까요?";
+    if (state === "error") return "앗, 한 번 더 꾹 눌러볼까요?";
     if (state === "copying") return "잠깐만…";
-    return isOpen ? "꾹 누르면 복사돼요" : "카드 꾹 눌러도 복사돼요";
+    return "카드 꾹 눌러도 복사돼요";
   }, [isOpen, state]);
 
   function handleCardClick() {
@@ -203,9 +195,11 @@ export function PromptCard({
           ))}
         </Meta>
 
-        <CopyToast $state={state} aria-live="polite">
-          {toast}
-        </CopyToast>
+        {closedToast ? (
+          <CopyToast $state={state} aria-live="polite">
+            {closedToast}
+          </CopyToast>
+        ) : null}
       </Body>
 
       <Accordion id={`prompt-${prompt.id}`} $open={isOpen}>
@@ -224,7 +218,7 @@ export function PromptCard({
             onTouchEnd={stopTouchPropagation}
             onTouchCancel={stopTouchPropagation}
           >
-            <CopyButton text={prompt.prompt} />
+            <CopyButton text={prompt.prompt} longPressState={state} />
           </div>
         </div>
       </Accordion>

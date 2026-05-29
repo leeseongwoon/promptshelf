@@ -28,10 +28,17 @@ const Bar = styled.header<{ $hidden: boolean; $reduceMotion: boolean }>`
     padding-bottom: ${({ theme }) => theme.space[6]};
   }
 
-  transform: translateY(${({ $hidden }) => ($hidden ? "-110%" : "0")});
+  transform: translate3d(0, ${({ $hidden }) => ($hidden ? "-100%" : "0")}, 0);
+  opacity: ${({ $hidden }) => ($hidden ? 0 : 1)};
+  pointer-events: ${({ $hidden }) => ($hidden ? "none" : "auto")};
   transition: ${({ $reduceMotion }) =>
-    $reduceMotion ? "none" : "transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)"};
-  will-change: transform;
+    $reduceMotion
+      ? "none"
+      : `
+    transform 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.38s cubic-bezier(0.22, 1, 0.36, 1)
+  `};
+  will-change: transform, opacity;
 `;
 
 const Spacer = styled.div`
