@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 
+import {
+  FilterSelect,
+  KIND_FILTER_OPTIONS,
+  MODEL_FILTER_OPTIONS,
+} from "@/components/filter-select";
 import { Button, Container, Input, Pill } from "@/components/ui";
 import { useScrollHideHeader } from "@/hooks/use-scroll-hide-header";
 
@@ -13,9 +18,16 @@ const Bar = styled.header<{ $hidden: boolean; $reduceMotion: boolean }>`
   left: 0;
   right: 0;
   z-index: 20;
-  padding: ${({ theme }) => theme.space[4]} 0 ${({ theme }) => theme.space[3]};
+  padding: ${({ theme }) => theme.space[4]} 0 ${({ theme }) => theme.space[5]};
   backdrop-filter: blur(16px);
   background: ${({ theme }) => theme.color.headerBg};
+  border-bottom: 2px dashed ${({ theme }) => theme.color.border};
+  overflow: visible;
+
+  @media (max-width: 720px) {
+    padding-bottom: ${({ theme }) => theme.space[6]};
+  }
+
   transform: translateY(${({ $hidden }) => ($hidden ? "-110%" : "0")});
   transition: ${({ $reduceMotion }) =>
     $reduceMotion ? "none" : "transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)"};
@@ -24,12 +36,17 @@ const Bar = styled.header<{ $hidden: boolean; $reduceMotion: boolean }>`
 
 const Spacer = styled.div`
   flex-shrink: 0;
+
+  @media (max-width: 720px) {
+    margin-bottom: ${({ theme }) => theme.space[3]};
+  }
 `;
 
 const Row = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.space[4]};
+  overflow: visible;
 `;
 
 const TopRow = styled.div`
@@ -72,6 +89,7 @@ const SearchForm = styled.form`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.space[3]};
+  overflow: visible;
 `;
 
 const SearchShell = styled.div`
@@ -101,29 +119,20 @@ const FilterRow = styled.div`
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.space[2]};
   align-items: center;
-`;
+  overflow: visible;
 
-const Select = styled.select`
-  flex: 1 1 120px;
-  min-width: 0;
-  background: rgba(255, 255, 255, 0.92);
-  border: none;
-  color: ${({ theme }) => theme.color.text};
-  border-radius: ${({ theme }) => theme.radius.pill};
-  padding: 11px 16px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  box-shadow: 0 6px 18px rgba(255, 143, 171, 0.12);
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%239A8494' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  padding-right: 36px;
+  @media (max-width: 720px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    align-items: start;
 
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 4px ${({ theme }) => theme.color.brandSoft};
+    button[type="submit"] {
+      grid-column: 1 / -1;
+      width: 100%;
+      margin-top: 2px;
+      padding: 10px 16px;
+    }
   }
 `;
 
@@ -132,6 +141,8 @@ const SearchIcon = styled.span`
   flex-shrink: 0;
   opacity: 0.85;
 `;
+
+type OpenFilter = "kind" | "model" | null;
 
 export function SiteHeader({
   defaultQuery,
@@ -148,6 +159,7 @@ export function SiteHeader({
   const barRef = useRef<HTMLElement>(null);
   const [barHeight, setBarHeight] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [openFilter, setOpenFilter] = useState<OpenFilter>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -175,58 +187,57 @@ export function SiteHeader({
       ro.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, []);
+  }, [openFilter]);
 
   return (
     <>
       <Bar ref={barRef} $hidden={reduceMotion ? false : hidden} $reduceMotion={reduceMotion}>
-        <Container>
-        <Row>
-          <TopRow>
-            <BrandLink href="/" aria-label="프롬프트 선반 홈">
-              <Brand>
-                <BrandEmoji aria-hidden>🎀</BrandEmoji>
-                <BrandName>PromptShelf</BrandName>
-                {tag ? <Pill $tone="lavender">#{tag}</Pill> : null}
-              </Brand>
-            </BrandLink>
-          </TopRow>
+        <Container style={{ overflow: "visible" }}>
+          <Row>
+            <TopRow>
+              <BrandLink href="/" aria-label="프롬프트 선반 홈">
+                <Brand>
+                  <BrandEmoji aria-hidden>🎀</BrandEmoji>
+                  <BrandName>PromptShelf</BrandName>
+                  {tag ? <Pill $tone="lavender">#{tag}</Pill> : null}
+                </Brand>
+              </BrandLink>
+            </TopRow>
 
-          <SearchForm action="/" method="get" role="search" aria-label="프롬프트 검색">
-            {tag ? <input type="hidden" name="tag" value={tag} /> : null}
-            <SearchShell>
-              <SearchIcon aria-hidden>🔍</SearchIcon>
-              <Input
-                name="q"
-                defaultValue={defaultQuery}
-                placeholder="뭐 찾아요? 과제, 셀카, 자소서…"
-                aria-label="검색어"
-              />
-            </SearchShell>
-            <FilterRow>
-              <Select name="kind" defaultValue={defaultKind ?? ""} aria-label="종류">
-                <option value="">📎 전체</option>
-                <option value="Code">💻 코딩</option>
-                <option value="Image">🎨 그림</option>
-                <option value="Writing">✍️ 글</option>
-                <option value="Video">🎬 영상</option>
-                <option value="Data">📊 데이터</option>
-                <option value="Productivity">✨ 생산성</option>
-                <option value="Other">🌷 기타</option>
-              </Select>
-              <Select name="model" defaultValue={defaultModel ?? ""} aria-label="도구">
-                <option value="">🫧 전체</option>
-                <option value="GPT">🤖 GPT</option>
-                <option value="Claude">🐱 Claude</option>
-                <option value="Gemini">💎 Gemini</option>
-                <option value="Other">✨ 기타</option>
-              </Select>
-              <Button type="submit" $variant="primary">
-                찾아보기
-              </Button>
-            </FilterRow>
-          </SearchForm>
-        </Row>
+            <SearchForm action="/" method="get" role="search" aria-label="프롬프트 검색">
+              {tag ? <input type="hidden" name="tag" value={tag} /> : null}
+              <SearchShell>
+                <SearchIcon aria-hidden>🔍</SearchIcon>
+                <Input
+                  name="q"
+                  defaultValue={defaultQuery}
+                  placeholder="뭐 찾아요? 과제, 셀카, 자소서…"
+                  aria-label="검색어"
+                />
+              </SearchShell>
+              <FilterRow>
+                <FilterSelect
+                  name="kind"
+                  defaultValue={defaultKind ?? ""}
+                  options={KIND_FILTER_OPTIONS}
+                  aria-label="종류"
+                  open={openFilter === "kind"}
+                  onOpenChange={(next) => setOpenFilter(next ? "kind" : null)}
+                />
+                <FilterSelect
+                  name="model"
+                  defaultValue={defaultModel ?? ""}
+                  options={MODEL_FILTER_OPTIONS}
+                  aria-label="도구"
+                  open={openFilter === "model"}
+                  onOpenChange={(next) => setOpenFilter(next ? "model" : null)}
+                />
+                <Button type="submit" $variant="primary" onClick={() => setOpenFilter(null)}>
+                  찾아보기
+                </Button>
+              </FilterRow>
+            </SearchForm>
+          </Row>
         </Container>
       </Bar>
       <Spacer style={{ height: barHeight }} aria-hidden />

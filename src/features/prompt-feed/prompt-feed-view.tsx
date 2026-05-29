@@ -10,7 +10,12 @@ const Hero = styled.section`
   text-align: center;
   padding: ${({ theme }) => theme.space[8]} ${({ theme }) => theme.space[4]}
     ${({ theme }) => theme.space[6]};
-  margin-bottom: ${({ theme }) => theme.space[2]};
+  margin-bottom: ${({ theme }) => theme.space[4]};
+
+  @media (max-width: 720px) {
+    margin-bottom: ${({ theme }) => theme.space[2]};
+    padding-bottom: ${({ theme }) => theme.space[2]};
+  }
 
   &::before,
   &::after {

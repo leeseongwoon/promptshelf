@@ -1,11 +1,25 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import styled from "styled-components";
 
 import type { Prompt } from "@/types/prompt";
 import { PromptCard } from "@/components/prompt-card";
-import { GhostButton, Input } from "@/components/ui";
+import { GhostButton } from "@/components/ui";
+import { PromptFeedPager } from "@/features/prompt-feed/prompt-feed-pager";
+
+const PAGE_SIZE = 5;
+
+const FeedSection = styled.section`
+  margin-top: ${({ theme }) => theme.space[4]};
+  padding-top: ${({ theme }) => theme.space[5]};
+  border-top: 2px dashed ${({ theme }) => theme.color.border};
+
+  @media (max-width: 720px) {
+    margin-top: ${({ theme }) => theme.space[6]};
+    padding-top: ${({ theme }) => theme.space[6]};
+  }
+`;
 
 const FeedTop = styled.div`
   display: flex;
@@ -29,30 +43,38 @@ const Grid = styled.div`
   gap: ${({ theme }) => theme.space[5]};
 `;
 
-const MobileSearch = styled.form`
-  display: none;
-  gap: ${({ theme }) => theme.space[3]};
-  width: 100%;
-  margin-top: ${({ theme }) => theme.space[3]};
-
-  @media (max-width: 720px) {
-    display: flex;
-    flex-direction: column;
-  }
-`;
+function paginate<T>(items: T[], page: number, pageSize: number) {
+  const start = page * pageSize;
+  return items.slice(start, start + pageSize);
+}
 
 export function PromptFeedClient({ initialPrompts }: { initialPrompts: Prompt[] }) {
   const [prompts, setPrompts] = useState<Prompt[]>(initialPrompts);
   const [isPending, startTransition] = useTransition();
-  const [mobileQ, setMobileQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const feedRef = useRef<HTMLElement>(null);
 
   const count = useMemo(() => prompts.length, [prompts]);
+  const pageCount = useMemo(() => Math.max(1, Math.ceil(count / PAGE_SIZE)), [count]);
+  const pagePrompts = useMemo(() => paginate(prompts, page, PAGE_SIZE), [prompts, page]);
 
   useEffect(() => {
     setPrompts(initialPrompts);
     setOpenId(null);
+    setPage(0);
   }, [initialPrompts]);
+
+  useEffect(() => {
+    if (page > pageCount - 1) setPage(Math.max(0, pageCount - 1));
+  }, [page, pageCount]);
+
+  function goToPage(next: number) {
+    const clamped = Math.min(Math.max(0, next), pageCount - 1);
+    setPage(clamped);
+    setOpenId(null);
+    feedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   function refreshWithQuery(q: string) {
     startTransition(async () => {
@@ -61,6 +83,8 @@ export function PromptFeedClient({ initialPrompts }: { initialPrompts: Prompt[] 
       });
       const json = (await res.json()) as { prompts: Prompt[] };
       setPrompts(json.prompts);
+      setPage(0);
+      setOpenId(null);
     });
   }
 
@@ -72,37 +96,18 @@ export function PromptFeedClient({ initialPrompts }: { initialPrompts: Prompt[] 
   }
 
   return (
-    <>
+    <FeedSection ref={feedRef} aria-label="프롬프트 목록">
       <FeedTop>
         <CountLine>
-          지금 {count}개 모여 있어요 {isPending ? "· 불러오는 중…" : ""}
+          지금 {count}개 · {page + 1}페이지 {isPending ? "· 불러오는 중…" : ""}
         </CountLine>
         <GhostButton type="button" disabled={isPending} onClick={() => refreshWithQuery("")}>
           처음부터 보기
         </GhostButton>
       </FeedTop>
 
-      <MobileSearch
-        onSubmit={(e) => {
-          e.preventDefault();
-          refreshWithQuery(mobileQ);
-        }}
-        role="search"
-        aria-label="모바일 검색"
-      >
-        <Input
-          value={mobileQ}
-          onChange={(e) => setMobileQ(e.target.value)}
-          placeholder="🔍 여기서도 찾아볼 수 있어요"
-          aria-label="검색어"
-        />
-        <GhostButton type="submit" disabled={isPending}>
-          찾아보기
-        </GhostButton>
-      </MobileSearch>
-
       <Grid>
-        {prompts.map((p) => (
+        {pagePrompts.map((p) => (
           <PromptCard
             key={p.id}
             prompt={p}
@@ -112,6 +117,12 @@ export function PromptFeedClient({ initialPrompts }: { initialPrompts: Prompt[] 
           />
         ))}
       </Grid>
-    </>
+
+      {pagePrompts.length === 0 ? (
+        <CountLine style={{ textAlign: "center", marginTop: 24 }}>아직 프롬프트가 없어요.</CountLine>
+      ) : null}
+
+      <PromptFeedPager page={page} pageCount={pageCount} onPageChange={goToPage} />
+    </FeedSection>
   );
 }
