@@ -11,7 +11,7 @@ const gowun = Gowun_Dodum({
 });
 
 export const metadata: Metadata = {
-  title: "프롬프트 선반",
+  title: "PromptShelf",
   description: "과제·일기·취미까지, 바로 복사해서 쓰는 프롬프트 모음집",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
 };

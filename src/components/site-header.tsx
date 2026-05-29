@@ -140,7 +140,7 @@ export function SiteHeader({
             <BrandLink href="/" aria-label="프롬프트 선반 홈">
               <Brand>
                 <BrandEmoji aria-hidden>🎀</BrandEmoji>
-                <BrandName>프롬프트 선반</BrandName>
+                <BrandName>PromptShelf</BrandName>
                 {tag ? <Pill $tone="lavender">#{tag}</Pill> : null}
               </Brand>
             </BrandLink>
