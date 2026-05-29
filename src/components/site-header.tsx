@@ -1,17 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 
 import { Button, Container, Input, Pill } from "@/components/ui";
+import { useScrollHideHeader } from "@/hooks/use-scroll-hide-header";
 
-const Bar = styled.header`
-  position: sticky;
+const Bar = styled.header<{ $hidden: boolean; $reduceMotion: boolean }>`
+  position: fixed;
   top: 0;
-  z-index: 10;
+  left: 0;
+  right: 0;
+  z-index: 20;
   padding: ${({ theme }) => theme.space[4]} 0 ${({ theme }) => theme.space[3]};
   backdrop-filter: blur(16px);
   background: ${({ theme }) => theme.color.headerBg};
+  transform: translateY(${({ $hidden }) => ($hidden ? "-110%" : "0")});
+  transition: ${({ $reduceMotion }) =>
+    $reduceMotion ? "none" : "transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)"};
+  will-change: transform;
+`;
+
+const Spacer = styled.div`
+  flex-shrink: 0;
 `;
 
 const Row = styled.div`
@@ -132,9 +144,43 @@ export function SiteHeader({
   defaultKind?: string;
   defaultModel?: string;
 }) {
+  const hidden = useScrollHideHeader();
+  const barRef = useRef<HTMLElement>(null);
+  const [barHeight, setBarHeight] = useState(0);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduceMotion(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    const el = barRef.current;
+    if (!el) return;
+
+    function measure() {
+      const node = barRef.current;
+      if (!node) return;
+      setBarHeight(node.getBoundingClientRect().height);
+    }
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+
   return (
-    <Bar>
-      <Container>
+    <>
+      <Bar ref={barRef} $hidden={reduceMotion ? false : hidden} $reduceMotion={reduceMotion}>
+        <Container>
         <Row>
           <TopRow>
             <BrandLink href="/" aria-label="프롬프트 선반 홈">
@@ -181,7 +227,9 @@ export function SiteHeader({
             </FilterRow>
           </SearchForm>
         </Row>
-      </Container>
-    </Bar>
+        </Container>
+      </Bar>
+      <Spacer style={{ height: barHeight }} aria-hidden />
+    </>
   );
 }
