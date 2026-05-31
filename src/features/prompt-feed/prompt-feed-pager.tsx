@@ -62,7 +62,7 @@ export function PromptFeedPager({
   return (
     <Wrap aria-label="프롬프트 페이지">
       <GhostButton type="button" disabled={page <= 0} onClick={() => onPageChange(page - 1)}>
-        ← 이전
+        이전
       </GhostButton>
 
       <PageInfo>
@@ -87,7 +87,7 @@ export function PromptFeedPager({
         disabled={page >= pageCount - 1}
         onClick={() => onPageChange(page + 1)}
       >
-        다음 →
+        다음
       </GhostButton>
     </Wrap>
   );

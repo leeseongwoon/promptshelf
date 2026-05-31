@@ -64,10 +64,15 @@ const Body = styled.div`
   gap: 10px;
 `;
 
-const CopyToast = styled.div<{ $state: "idle" | "copying" | "copied" | "error" }>`
+const CopyToast = styled.div<{ $state: "idle" | "holding" | "copying" | "copied" | "error" }>`
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: ${({ theme }) => theme.radius.sm};
+  background: ${({ theme }) => theme.color.panel2};
   min-height: 18px;
   font-size: 12px;
   font-weight: 600;
+  text-align: center;
   color: ${({ theme, $state }) =>
     $state === "copied"
       ? theme.color.success
@@ -84,9 +89,25 @@ const Accordion = styled.div<{ $open: boolean }>`
   pointer-events: ${({ $open }) => ($open ? "auto" : "none")};
 `;
 
-const PromptCopySurface = styled.div`
+const copyZoneBase = `
+  touch-action: pan-y;
   -webkit-touch-callout: none;
-  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+`;
+
+const PromptCopySurface = styled.div<{ $holding?: boolean }>`
+  position: relative;
+  ${copyZoneBase}
+
+  ${({ $holding, theme }) =>
+    $holding
+      ? `
+    outline: 2px dashed ${theme.color.brand};
+    outline-offset: 4px;
+    border-radius: ${theme.radius.md};
+  `
+      : ""}
 `;
 
 const PromptPreview = styled.div`
@@ -106,6 +127,25 @@ const PromptPreview = styled.div`
   -webkit-touch-callout: none;
 `;
 
+const ClosedPressZone = styled.div<{ $holding?: boolean }>`
+  ${copyZoneBase}
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 -4px;
+  padding: 4px;
+  border-radius: ${({ theme }) => theme.radius.md};
+
+  ${({ $holding, theme }) =>
+    $holding
+      ? `
+    outline: 2px dashed ${theme.color.brand};
+    outline-offset: 2px;
+    background: ${theme.color.brandSoft}22;
+  `
+      : ""}
+`;
+
 const LikeButton = styled(GhostButton)`
   flex-shrink: 0;
   min-width: 72px;
@@ -113,7 +153,7 @@ const LikeButton = styled(GhostButton)`
   font-size: 13px;
 `;
 
-function stopTouchPropagation(e: React.SyntheticEvent) {
+function stopPressPropagation(e: React.SyntheticEvent) {
   e.stopPropagation();
 }
 
@@ -130,9 +170,9 @@ export function PromptCard({
 }) {
   const suppressToggleRef = useRef(false);
 
-  const { state, bind } = useLongPressCopy({
+  const { state, targetRef, consumedClick } = useLongPressCopy({
     text: prompt.prompt,
-    moveCancelPx: 24,
+    moveCancelPx: 22,
     onCopied: () => {
       suppressToggleRef.current = true;
     },
@@ -142,12 +182,12 @@ export function PromptCard({
     if (isOpen) return "";
     if (state === "copied") return "복사됐어요 💕";
     if (state === "error") return "앗, 한 번 더 꾹 눌러볼까요?";
-    if (state === "copying") return "잠깐만…";
+    if (state === "copying" || state === "holding") return "놓으면 복사돼요…";
     return "카드 꾹 눌러도 복사돼요";
   }, [isOpen, state]);
 
   function handleCardClick() {
-    if (suppressToggleRef.current) {
+    if (suppressToggleRef.current || consumedClick()) {
       suppressToggleRef.current = false;
       return;
     }
@@ -167,44 +207,87 @@ export function PromptCard({
         if (e.key === "Enter" || e.key === " ") handleCardClick();
       }}
     >
-      <TitleRow>
-        <Title>{prompt.title}</Title>
-        <LikeButton
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onUpvote?.();
-          }}
-          onTouchStart={stopTouchPropagation}
-          aria-label="도움 됐어요"
+      {!isOpen ? (
+        <ClosedPressZone
+          key="copy-closed"
+          ref={targetRef}
+          $holding={state === "holding"}
+          aria-label="카드 꾹 눌러 복사"
         >
-          ♡ {prompt.upvotes}
-        </LikeButton>
-      </TitleRow>
+          <TitleRow>
+            <Title>{prompt.title}</Title>
+            <LikeButton
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onUpvote?.();
+              }}
+              onPointerDown={stopPressPropagation}
+              onPointerUp={stopPressPropagation}
+              onPointerCancel={stopPressPropagation}
+              aria-label="도움 됐어요"
+            >
+              ♡ {prompt.upvotes}
+            </LikeButton>
+          </TitleRow>
 
-      <Body {...(!isOpen ? bind : {})}>
-        <Desc>{prompt.description}</Desc>
+          <Desc>{prompt.description}</Desc>
 
-        <Meta>
-          <Pill $tone="pink">{formatKind(prompt.kind)}</Pill>
-          <Pill $tone="lavender">{formatModel(prompt.model)}</Pill>
-          {prompt.tags.slice(0, 4).map((t) => (
-            <Pill key={t} $tone="plain">
-              #{t}
-            </Pill>
-          ))}
-        </Meta>
+          <Meta>
+            <Pill $tone="pink">{formatKind(prompt.kind)}</Pill>
+            <Pill $tone="lavender">{formatModel(prompt.model)}</Pill>
+            {prompt.tags.slice(0, 4).map((t) => (
+              <Pill key={t} $tone="plain">
+                #{t}
+              </Pill>
+            ))}
+          </Meta>
 
-        {closedToast ? (
           <CopyToast $state={state} aria-live="polite">
             {closedToast}
           </CopyToast>
-        ) : null}
-      </Body>
+        </ClosedPressZone>
+      ) : (
+        <>
+          <TitleRow>
+            <Title>{prompt.title}</Title>
+            <LikeButton
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onUpvote?.();
+              }}
+              onPointerDown={stopPressPropagation}
+              onPointerUp={stopPressPropagation}
+              onPointerCancel={stopPressPropagation}
+              aria-label="도움 됐어요"
+            >
+              ♡ {prompt.upvotes}
+            </LikeButton>
+          </TitleRow>
+
+          <Desc>{prompt.description}</Desc>
+
+          <Meta>
+            <Pill $tone="pink">{formatKind(prompt.kind)}</Pill>
+            <Pill $tone="lavender">{formatModel(prompt.model)}</Pill>
+            {prompt.tags.slice(0, 4).map((t) => (
+              <Pill key={t} $tone="plain">
+                #{t}
+              </Pill>
+            ))}
+          </Meta>
+        </>
+      )}
 
       <Accordion id={`prompt-${prompt.id}`} $open={isOpen}>
         <div style={{ display: "flex", flexDirection: "column", gap: 14, paddingTop: 10 }}>
-          <PromptCopySurface {...(isOpen ? bind : {})} aria-label="프롬프트 본문(꾹 눌러 복사)">
+          <PromptCopySurface
+            key="copy-open"
+            ref={isOpen ? targetRef : undefined}
+            $holding={isOpen && state === "holding"}
+            aria-label="프롬프트 본문(꾹 눌러 복사)"
+          >
             <PromptPreview>
               {prompt.prompt?.trim()
                 ? prompt.prompt
@@ -214,9 +297,9 @@ export function PromptCard({
 
           <div
             onClick={(e) => e.stopPropagation()}
-            onTouchStart={stopTouchPropagation}
-            onTouchEnd={stopTouchPropagation}
-            onTouchCancel={stopTouchPropagation}
+            onPointerDown={stopPressPropagation}
+            onPointerUp={stopPressPropagation}
+            onPointerCancel={stopPressPropagation}
           >
             <CopyButton text={prompt.prompt} longPressState={state} />
           </div>

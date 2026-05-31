@@ -48,9 +48,10 @@ const PromptBox = styled.pre`
   word-break: break-word;
   font-family: ${({ theme }) => theme.font.mono};
   line-height: 1.6;
-  user-select: text;
-  -webkit-user-select: text;
+  user-select: none;
+  -webkit-user-select: none;
   -webkit-touch-callout: none;
+  touch-action: pan-y;
 `;
 
 const SideCard = styled(Card)`
@@ -61,7 +62,7 @@ const SideCard = styled(Card)`
   gap: ${({ theme }) => theme.space[4]};
 `;
 
-const Toast = styled.div<{ $state: "idle" | "copying" | "copied" | "error" }>`
+const Toast = styled.div<{ $state: "idle" | "holding" | "copying" | "copied" | "error" }>`
   height: 20px;
   font-size: 12px;
   color: ${({ theme, $state }) =>
@@ -73,12 +74,13 @@ const Toast = styled.div<{ $state: "idle" | "copying" | "copied" | "error" }>`
 `;
 
 export function PromptDetailView({ prompt }: { prompt: Prompt }) {
-  const { state, bind } = useLongPressCopy({ text: prompt.prompt });
+  const { state, targetRef } = useLongPressCopy({ text: prompt.prompt });
   const toast = useMemo(() => {
     if (state === "copied") return "복사됨";
     if (state === "error") return "복사 실패";
+    if (state === "holding") return "놓으면 복사돼요…";
     if (state === "copying") return "복사 중…";
-    return "모바일: 프롬프트를 꾹 눌러 복사";
+    return "프롬프트 꾹 눌러도 복사돼요";
   }, [state]);
 
   return (
@@ -97,7 +99,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               <Title>{prompt.title}</Title>
               <Desc>{prompt.description}</Desc>
               <PromptBox
-                {...bind}
+                ref={targetRef}
                 aria-label="프롬프트(꾹 눌러 복사)"
                 role="region"
                 tabIndex={0}

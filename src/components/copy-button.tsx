@@ -6,7 +6,7 @@ import styled from "styled-components";
 import { Button } from "@/components/ui";
 import { copyText } from "@/lib/copy-text";
 
-export type CopyUiState = "idle" | "copying" | "copied" | "error";
+export type CopyUiState = "idle" | "holding" | "copying" | "copied" | "error";
 
 const Row = styled.div`
   display: flex;
@@ -28,7 +28,14 @@ const CopyHint = styled.span<{ $tone?: "muted" | "success" | "danger" }>`
 
 function mergeState(click: CopyUiState, longPress?: CopyUiState): CopyUiState {
   if (click === "copied" || click === "error") return click;
-  if (longPress === "copied" || longPress === "error" || longPress === "copying") return longPress;
+  if (
+    longPress === "copied" ||
+    longPress === "error" ||
+    longPress === "copying" ||
+    longPress === "holding"
+  ) {
+    return longPress;
+  }
   return click;
 }
 
@@ -52,6 +59,7 @@ export function CopyButton({
   const hint = useMemo(() => {
     if (uiState === "copied") return { text: "복사됐어요, 잘 써보세요 💕", tone: "success" as const };
     if (uiState === "error") return { text: "앗, 한 번 더 꾹 눌러볼까요?", tone: "danger" as const };
+    if (uiState === "holding") return { text: "놓으면 복사돼요…", tone: "muted" as const };
     if (uiState === "copying") return { text: "잠깐만…", tone: "muted" as const };
     return { text: "프롬프트 꾹 눌러도 복사돼요", tone: "muted" as const };
   }, [uiState]);

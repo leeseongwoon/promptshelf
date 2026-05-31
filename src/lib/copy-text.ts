@@ -1,48 +1,65 @@
 "use client";
 
-/** iOS Safari: must run synchronously inside touchend/click handler. */
-export function copyTextSync(text: string): boolean {
-  try {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.setAttribute("readonly", "true");
-    ta.style.position = "fixed";
-    ta.style.top = "0";
-    ta.style.left = "0";
-    ta.style.width = "2px";
-    ta.style.height = "2px";
-    ta.style.opacity = "0";
-    ta.style.fontSize = "16px";
-    ta.style.pointerEvents = "none";
-    document.body.appendChild(ta);
+function selectTextarea(ta: HTMLTextAreaElement, text: string) {
+  ta.focus({ preventScroll: true });
 
-    ta.focus({ preventScroll: true });
-    ta.select();
+  if (typeof ta.setSelectionRange === "function") {
     ta.setSelectionRange(0, text.length);
-
-    const ok = document.execCommand("copy");
-    document.body.removeChild(ta);
-    return ok;
-  } catch {
-    return false;
   }
+
+  ta.select();
 }
 
-/**
- * Copy while a user gesture is still active (e.g. touchend).
- * Starts Clipboard API in the same synchronous call stack when possible.
- */
-export function copyTextFromUserGesture(text: string): Promise<boolean> {
-  if (copyTextSync(text)) return Promise.resolve(true);
+/** Must run synchronously inside touchend/click (iOS Safari). */
+export function copyTextSync(text: string): boolean {
+  if (!text?.trim()) return false;
 
-  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-    return navigator.clipboard.writeText(text).then(
-      () => true,
-      () => false,
-    );
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("aria-hidden", "true");
+  ta.style.cssText =
+    "position:fixed;top:0;left:0;width:1px;height:1px;padding:12px;border:0;outline:0;opacity:0;font-size:16px;z-index:-1;";
+
+  document.body.appendChild(ta);
+  selectTextarea(ta, text);
+
+  let ok = false;
+  try {
+    ok = document.execCommand("copy");
+  } catch {
+    ok = false;
   }
 
-  return Promise.resolve(false);
+  document.body.removeChild(ta);
+
+  if (ok) return true;
+
+  // iOS fallback: contentEditable div
+  const div = document.createElement("div");
+  div.contentEditable = "true";
+  div.textContent = text;
+  div.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px;z-index:-1;";
+  document.body.appendChild(div);
+
+  const range = document.createRange();
+  range.selectNodeContents(div);
+  const sel = window.getSelection();
+  sel?.removeAllRanges();
+  sel?.addRange(range);
+
+  try {
+    ok = document.execCommand("copy");
+  } catch {
+    ok = false;
+  }
+
+  sel?.removeAllRanges();
+  document.body.removeChild(div);
+  return ok;
+}
+
+export function copyTextFromUserGesture(text: string): boolean {
+  return copyTextSync(text);
 }
 
 export async function copyText(text: string): Promise<boolean> {
