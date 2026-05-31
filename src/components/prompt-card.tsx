@@ -172,7 +172,7 @@ export function PromptCard({
 
   const { state, targetRef, consumedClick } = useLongPressCopy({
     text: prompt.prompt,
-    moveCancelPx: 22,
+    moveCancelPx: 28,
     onCopied: () => {
       suppressToggleRef.current = true;
     },

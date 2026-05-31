@@ -8,9 +8,9 @@ type LongPressState = "idle" | "holding" | "copying" | "copied" | "error";
 
 export function useLongPressCopy({
   text,
-  pressMs = 480,
+  pressMs = 500,
   resetMs = 900,
-  moveCancelPx = 14,
+  moveCancelPx = 24,
   onCopied,
 }: {
   text: string;
@@ -54,10 +54,11 @@ export function useLongPressCopy({
     if (!el) return;
 
     let holdTimer: number | null = null;
-    let holdReady = false;
+    let holdCommitted = false;
     let cancelled = false;
     let startX = 0;
     let startY = 0;
+    let startAt = 0;
     let activePointer = -1;
 
     const clearHoldTimer = () => {
@@ -67,9 +68,10 @@ export function useLongPressCopy({
 
     const resetSession = () => {
       clearHoldTimer();
-      holdReady = false;
+      holdCommitted = false;
       cancelled = false;
       activePointer = -1;
+      startAt = 0;
       setState((s) => (s === "holding" ? "idle" : s));
     };
 
@@ -88,29 +90,29 @@ export function useLongPressCopy({
       finishCopy(ok);
     };
 
-    const scheduleHold = () => {
-      clearHoldTimer();
-      holdReady = false;
-      holdTimer = window.setTimeout(() => {
-        holdReady = true;
-        setState("holding");
-        if (navigator.vibrate) navigator.vibrate(6);
-      }, pressMs);
-    };
-
     const onPointerDown = (e: PointerEvent) => {
       if (!e.isPrimary) return;
       if (activePointer !== -1) return;
 
       activePointer = e.pointerId;
       cancelled = false;
+      holdCommitted = false;
+      startAt = Date.now();
       startX = e.clientX;
       startY = e.clientY;
-      scheduleHold();
+
+      clearHoldTimer();
+      holdTimer = window.setTimeout(() => {
+        holdCommitted = true;
+        setState("holding");
+        if (navigator.vibrate) navigator.vibrate(6);
+      }, pressMs);
     };
 
     const onPointerMove = (e: PointerEvent) => {
       if (e.pointerId !== activePointer) return;
+      // 홀드가 확정된 뒤에는 손떨림/스크롤로 취소하지 않음
+      if (holdCommitted) return;
 
       const dx = Math.abs(e.clientX - startX);
       const dy = Math.abs(e.clientY - startY);
@@ -120,28 +122,31 @@ export function useLongPressCopy({
       }
     };
 
-    const onWindowPointerMove = (e: PointerEvent) => {
-      onPointerMove(e);
-    };
-
-    const endPointer = (e: PointerEvent, run: boolean) => {
+    const endPointer = (e: PointerEvent) => {
       if (e.pointerId !== activePointer) return;
 
-      const shouldCopy = run && holdReady && !cancelled;
-      clearHoldTimer();
-      holdReady = false;
-      activePointer = -1;
+      const elapsed = startAt ? Date.now() - startAt : 0;
+      const shouldCopy =
+        holdCommitted && !cancelled && elapsed >= pressMs - 40;
 
-      if (shouldCopy) runCopy(e);
-      else resetSession();
+      clearHoldTimer();
+      holdCommitted = false;
+      activePointer = -1;
+      startAt = 0;
+
+      if (shouldCopy) {
+        runCopy(e);
+      } else {
+        resetSession();
+      }
     };
 
     const onPointerUp = (e: PointerEvent) => {
-      endPointer(e, true);
+      endPointer(e);
     };
 
     const onPointerCancel = (e: PointerEvent) => {
-      endPointer(e, true);
+      endPointer(e);
     };
 
     const onContextMenu = (e: Event) => {
@@ -153,7 +158,7 @@ export function useLongPressCopy({
     el.addEventListener("pointerup", onPointerUp);
     el.addEventListener("pointercancel", onPointerCancel);
     el.addEventListener("contextmenu", onContextMenu);
-    window.addEventListener("pointermove", onWindowPointerMove);
+    window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerCancel);
 
@@ -163,7 +168,7 @@ export function useLongPressCopy({
       el.removeEventListener("pointerup", onPointerUp);
       el.removeEventListener("pointercancel", onPointerCancel);
       el.removeEventListener("contextmenu", onContextMenu);
-      window.removeEventListener("pointermove", onWindowPointerMove);
+      window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("pointercancel", onPointerCancel);
       resetSession();
